@@ -30,21 +30,6 @@ let ptyp_constr ~loc lid =
    ptyp_constr ~loc (Located.mk ~loc @@ lid) []
 
 
-let span_sig ~loc ~modul ?(name_label = "name") ?(code_path_label = "code_path")
-    ?(stdlib_name_label = "stdlib_name") () =
-   let loc = { loc with loc_ghost = true } in
-   let lstr label next =
-      ptyp_arrow (Labelled label) (ptyp_constr ~loc @@ Lident "string") ~loc next
-   in
-   let lcode_path label next =
-      ptyp_arrow (Labelled label)
-        (ptyp_constr ~loc @@ Ldot (modul, "code_path"))
-        ~loc next
-   in
-   lstr name_label @@ lcode_path code_path_label @@ lstr stdlib_name_label
-   @@ [%type: (unit -> 'ret) -> 'ret]
-
-
 let trace_syntax_sig ~loc =
    let loc = { loc with loc_ghost = true } in
    [%stri
@@ -90,12 +75,8 @@ let qualified_span ~modul ?(name_label = "name") ?(code_path_label = "code_path"
     (body : expression) =
    let loc = { body.pexp_loc with loc_ghost = true } in
    let thunk = [%expr fun () -> [%e body]] in
-   let constrained_ident =
-      pexp_constraint ~loc
-        (pexp_ident ~loc @@ Located.mk ~loc @@ Ldot (modul, "span"))
-        (span_sig ~loc ~modul ~name_label ~code_path_label ~stdlib_name_label ())
-   in
-   pexp_apply ~loc constrained_ident
+   pexp_apply ~loc
+     (pexp_ident ~loc @@ Located.mk ~loc @@ Ldot (modul, "span"))
      [
        (Labelled name_label, name);
        (Labelled code_path_label, code_path);
